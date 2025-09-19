@@ -1,0 +1,54 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role { SUPER_ADMIN DIRECTOR MANAGER TECHNICIAN COUNCILLOR }
+enum JobStatus { NEW ASSIGNED DEPARTED ONSITE PAUSED COMPLETED CANNOT_FIX CANCELLED }
+enum Priority { LOW NORMAL HIGH URGENT }
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  role      Role     @default(TECHNICIAN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Job {
+  id            String    @id @default(cuid())
+  reference     String    @unique
+  title         String
+  description   String?
+  status        JobStatus @default(NEW)
+  priority      Priority  @default(NORMAL)
+  customerSnap  Json
+  locationLat   Float?
+  locationLng   Float?
+  createdById   String
+  assignedToId  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  statusHistory JobStatusHistory[]
+}
+
+model JobStatusHistory {
+  id               String    @id @default(cuid())
+  clientMutationId String    @unique
+  jobId            String
+  actorId          String
+  from             JobStatus?
+  to               JobStatus
+  note             String?
+  lat              Float?
+  lng              Float?
+  outOfOrder       Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  Job              Job       @relation(fields: [jobId], references: [id])
+}
